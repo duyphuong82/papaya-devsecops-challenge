@@ -163,3 +163,13 @@ Trường hợp của ứng viên này:
 - Log này không bịa thêm prompt hay câu trả lời của Claude.
 - Mọi chỗ Claude nói "chưa chạy", "cần đối chiếu", "cần pháp chế xác nhận" đều được giữ nguyên, không sửa thành chắc chắn.
 - Nếu Papaya cần kiểm chứng thêm, ứng viên sẵn sàng cung cấp file PDF export từ trình duyệt của đoạn chat Claude này.
+
+## File 04 đến 08 - Làm với Meta AI
+
+- Lý do: Claude Free hết lượt đến 12:30 AM khi chạy Prompt 4, nên file 04 đến 08 làm với Meta AI.
+- Prompt 4: Viết file 04-cicd-workflow.md - OIDC, Environments, Policy-as-code.
+- Prompt 5: Viết file 05-secrets-identity-data-protection.md.
+- Prompt 6: Viết file 06-monitoring-observability-incident-response.md.
+- Prompt 7: Viết file 07-rollout-migration-adoption-plan.md.
+- Prompt 8: Viết file 08-final-checklist-and-submission.md.
+- Tất cả file 04 đến 08 đều ghi rõ phần nào là [Đã thấy], [Nguồn thứ cấp], [Cần đối chiếu], không bịa tên config, cần test trên repo canary trước khi áp cho production.
