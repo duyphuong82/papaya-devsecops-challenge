@@ -21,10 +21,10 @@ No long-lived AWS secrets in this repo. Production changes go only via: **PR →
 │   ├── 02-architecture.md
 │   ├── 03-claude-code-guardrails.md
 │   ├── 04-cicd-workflow.md
-│   ├── 05-incident-response-and-rollout.md
-│   ├── 06-secrets-and-data-protection.md
-│   ├── 07-observability-and-audit.md
-│   └── 08-hardening-and-supply-chain.md
+│   ├── 05-secrets-identity-data-protection.md
+│   ├── 06-monitoring-observability-incident-response.md
+│   ├── 07-rollout-migration-adoption-plan.md
+│   └── 08-final-checklist-and-submission.md
 ├── logical/
 │   └── logical-answers.md          # 5 answers, in Vietnamese, personal / real
 ├── conversations/
@@ -92,10 +92,10 @@ No long-lived AWS secrets in this repo. Production changes go only via: **PR →
 | 02 | `devsecops/02-architecture.md` | Secure architecture for VN / TH / HK tenants | Tenant isolation, S3 + KMS, state backend, break-glass |
 | 03 | `devsecops/03-claude-code-guardrails.md` | How to let Claude Code work without letting it break prod | Hooks, deny `pulumi destroy`, read-only prod on laptop, MCP limits |
 | 04 | `devsecops/04-cicd-workflow.md` | **The only production gate** — OIDC, Environments, policy-as-code, anti rubber-stamp | `ci.yml` + `deploy.yml`, OIDC `gha-plan` / `gha-apply`, `preview-gate` + fingerprint + `verify-approval`, CrossGuard policy pack |
-| 05 | `devsecops/05-incident-response-and-rollout.md` | Incident + rollout / rollback when gate fails or secret leaks | Revoke first, rotate, CloudTrail by `gha-<run_id>`, break-glass, drill |
-| 06 | `devsecops/06-secrets-and-data-protection.md` | Secrets + PHI/PII protection | OIDC replaces access keys, secret scanning + push protection, synthetic fixtures, no PHI in code / logs |
-| 07 | `devsecops/07-observability-and-audit.md` | Audit log + alerting so T8 is provable | CloudTrail session name, immutable logs, alerts on ruleset / environment / SCP change |
-| 08 | `devsecops/08-hardening-and-supply-chain.md` | Hardening + supply chain | SHA pinning, Dependabot, `sha_pinning_required`, lockfiles, `npm ci --ignore-scripts`, `actionlint` / `zizmor` |
+| 05 | `devsecops/05-secrets-identity-data-protection.md` | Secrets + PHI/PII protection | OIDC replaces access keys, secret scanning + push protection, synthetic fixtures, no PHI in code / logs |
+| 06 | `devsecops/06-monitoring-observability-incident-response.md` | Monitoring + Observability + Incident Response | CloudTrail by `gha-<run_id>`, alerting, incident runbook, revoke first, rotate, break-glass, drill |
+| 07 | `devsecops/07-rollout-migration-adoption-plan.md` | Rollout / Migration / Adoption Plan | Canary rollout, rollback plan, migration steps, adoption checklist |
+| 08 | `devsecops/08-final-checklist-and-submission.md` | Final checklist + Submission | Checklist before submit, what was verified / not verified, how to submit |
 
 > If file names for `05`–`08` in your local checkout differ slightly, the table above still maps 1-to-1 by number. Do not rename without updating this table.
 
