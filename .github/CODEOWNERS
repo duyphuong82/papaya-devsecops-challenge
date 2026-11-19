@@ -1,0 +1,10 @@
+# .github/CODEOWNERS - placeholder, can doi chieu ten team va duong dan that
+# Moi dong: duong dan + team phai duyet
+
+/apps/claim/                  @papaya/claim-team
+/apps/fwa/                    @papaya/fwa-team
+/infra/pulumi/                @papaya/platform-team
+/infra/policies/              @papaya/security-team
+/.github/workflows/           @papaya/platform-team @papaya/security-team
+/policy/                      @papaya/security-team
+*.md                          @papaya/docs-team
