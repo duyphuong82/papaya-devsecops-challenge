@@ -1,0 +1,2 @@
+runtime: nodejs
+description: Papaya guardrails - IAM, S3 public access, encryption, deletion protection

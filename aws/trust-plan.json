@@ -1,0 +1,21 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "GithubOidcPlan",
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::222222222222:oidc-provider/token.actions.githubusercontent.com"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+        },
+        "StringLike": {
+          "token.actions.githubusercontent.com:sub": "repo:papaya-insurtech/pumpkin:pull_request"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "stateful-resources-protected": {
+    "enforcementLevel": "advisory"
+  },
+  "stateful-deletion-guards": {
+    "enforcementLevel": "advisory"
+  }
+}

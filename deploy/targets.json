@@ -1,0 +1,37 @@
+{
+  "dev": {
+    "stack": "dev",
+    "region": "<REGION-CAN-DOI-CHIEU>",
+    "backend": "s3://<BUCKET-DEV>?awssdk=v2",
+    "plan_role": "arn:aws:iam::<ACCOUNT-DEV>:role/gha-plan",
+    "apply_role": "arn:aws:iam::<ACCOUNT-DEV>:role/gha-apply"
+  },
+  "staging": {
+    "stack": "staging",
+    "region": "<REGION-CAN-DOI-CHIEU>",
+    "backend": "s3://<BUCKET-STAGING>?awssdk=v2",
+    "plan_role": "arn:aws:iam::<ACCOUNT-STAGING>:role/gha-plan",
+    "apply_role": "arn:aws:iam::<ACCOUNT-STAGING>:role/gha-apply"
+  },
+  "prod-vn": {
+    "stack": "vn-prod",
+    "region": "<REGION-CAN-DOI-CHIEU>",
+    "backend": "s3://<BUCKET-PROD-VN>?awssdk=v2",
+    "plan_role": "arn:aws:iam::<ACCOUNT-PROD-VN>:role/gha-plan",
+    "apply_role": "arn:aws:iam::<ACCOUNT-PROD-VN>:role/gha-apply"
+  },
+  "prod-th": {
+    "stack": "th-prod",
+    "region": "<REGION-CAN-DOI-CHIEU>",
+    "backend": "s3://<BUCKET-PROD-TH>?awssdk=v2",
+    "plan_role": "arn:aws:iam::<ACCOUNT-PROD-TH>:role/gha-plan",
+    "apply_role": "arn:aws:iam::<ACCOUNT-PROD-TH>:role/gha-apply"
+  },
+  "prod-hk": {
+    "stack": "hk-prod",
+    "region": "<REGION-CAN-DOI-CHIEU>",
+    "backend": "s3://<BUCKET-PROD-HK>?awssdk=v2",
+    "plan_role": "arn:aws:iam::<ACCOUNT-PROD-HK>:role/gha-plan",
+    "apply_role": "arn:aws:iam::<ACCOUNT-PROD-HK>:role/gha-apply"
+  }
+}

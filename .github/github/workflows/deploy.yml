@@ -1,0 +1,179 @@
+name: deploy
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Môi trường đích
+        type: choice
+        options: [dev, staging, prod-vn, prod-th, prod-hk]
+        required: true
+permissions: {}
+concurrency:
+  group: deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+env:
+  PULUMI_SKIP_UPDATE_CHECK: "true"
+jobs:
+  plan:
+    name: plan (read-only role)
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      stack: ${{ steps.target.outputs.stack }}
+      hash: ${{ steps.gate.outputs.hash }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Resolve target
+        id: target
+        env:
+          TARGET: ${{ inputs.environment }}
+        run: |
+          set -euo pipefail
+          [[ $TARGET =~ ^(dev|staging|prod-(vn|th|hk))$ ]]
+          for k in stack region backend plan_role apply_role; do echo "$k=$(jq -er --arg t "$TARGET" --arg k "$k" '.[$t][$k]' deploy/targets.json)" >> "$GITHUB_OUTPUT"; done
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - uses: ./.github/actions/pulumi-env
+        with:
+          role-arn: ${{ steps.target.outputs.plan_role }}
+          region: ${{ steps.target.outputs.region }}
+          pulumi-version: ${{ vars.PULUMI_VERSION }}
+      - name: Build policy pack and install infra deps
+        run: |
+          (cd policy && npm ci --ignore-scripts && npm run build)
+          (cd infra && npm ci --ignore-scripts)
+      - name: Preview with policy pack
+        working-directory: infra
+        env:
+          PULUMI_BACKEND_URL: ${{ steps.target.outputs.backend }}
+          STACK: ${{ steps.target.outputs.stack }}
+          TARGET: ${{ inputs.environment }}
+        run: |
+          set -euo pipefail
+          cfg=staging; [[ $TARGET == prod-* ]] && cfg=prod
+          pulumi preview --stack "$STACK" --non-interactive --json --policy-pack "$GITHUB_WORKSPACE/policy" --policy-pack-config "$GITHUB_WORKSPACE/policy/config.$cfg.json" > "$RUNNER_TEMP/preview.json"
+      - name: Gate and sanitized summary
+        id: gate
+        env:
+          STACK: ${{ steps.target.outputs.stack }}
+        run: |
+          node scripts/preview-gate.mjs gate --preview "$RUNNER_TEMP/preview.json" --stack "$STACK" --out "$RUNNER_TEMP/summary.md" --steps-out "$RUNNER_TEMP/steps.json" --allow .github/preview-allow.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: plan
+          path: |
+            ${{ runner.temp }}/summary.md
+            ${{ runner.temp }}/steps.json
+          retention-days: 7
+  announce:
+    name: post plan to the merged PR(s)
+    needs: plan
+    if: ${{ always() && needs.plan.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: plan
+          path: ${{ runner.temp }}/in
+      - name: Comment on PR(s)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          TARGET: ${{ inputs.environment }}
+        run: |
+          set -euo pipefail
+          for pr in $(gh api "repos/$REPO/commits/$SHA/pulls" --jq '.[].number'); do bash scripts/post-comment.sh "$REPO" "$pr" "$RUNNER_TEMP/in/summary.md" "deploy-$TARGET"; done
+  apply:
+    name: apply (needs environment approval)
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      id-token: write
+      actions: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: plan
+          path: ${{ runner.temp }}/approved
+      - name: Verify approval (prod only)
+        if: startsWith(inputs.environment, 'prod-')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          SHA: ${{ github.sha }}
+          ACTOR: ${{ github.actor }}
+          TRIGGER: ${{ github.triggering_actor }}
+          TARGET: ${{ inputs.environment }}
+          HASH: ${{ needs.plan.outputs.hash }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$REPO/actions/runs/$RUN_ID/approvals" > "$RUNNER_TEMP/approvals.json"
+          forbid="$ACTOR,$TRIGGER"
+          for pr in $(gh api "repos/$REPO/commits/$SHA/pulls" --jq '.[].number'); do forbid="$forbid,$(gh api "repos/$REPO/pulls/$pr" --jq '.user.login')"; forbid="$forbid,$(gh api --paginate "repos/$REPO/pulls/$pr/commits" --jq '.[] | [.author.login, .committer.login] | map(select(.!=null)) | .[]' | paste -sd, -)"; done
+          node scripts/verify-approval.mjs --approvals "$RUNNER_TEMP/approvals.json" --environment "$TARGET" --hash "$HASH" --forbid "$forbid"
+      - name: Resolve target
+        id: target
+        env:
+          TARGET: ${{ inputs.environment }}
+        run: |
+          set -euo pipefail
+          [[ $TARGET =~ ^(dev|staging|prod-(vn|th|hk))$ ]]
+          for k in stack region backend apply_role; do echo "$k=$(jq -er --arg t "$TARGET" --arg k "$k" '.[$t][$k]' deploy/targets.json)" >> "$GITHUB_OUTPUT"; done
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - uses: ./.github/actions/pulumi-env
+        with:
+          role-arn: ${{ steps.target.outputs.apply_role }}
+          region: ${{ steps.target.outputs.region }}
+          pulumi-version: ${{ vars.PULUMI_VERSION }}
+      - name: Build policy pack and install infra deps
+        run: |
+          (cd policy && npm ci --ignore-scripts && npm run build)
+          (cd infra && npm ci --ignore-scripts)
+      - name: Re-preview and compare
+        working-directory: infra
+        env:
+          PULUMI_BACKEND_URL: ${{ steps.target.outputs.backend }}
+          STACK: ${{ steps.target.outputs.stack }}
+          TARGET: ${{ inputs.environment }}
+        run: |
+          set -euo pipefail
+          cfg=staging; [[ $TARGET == prod-* ]] && cfg=prod
+          pulumi preview --stack "$STACK" --non-interactive --json --policy-pack "$GITHUB_WORKSPACE/policy" --policy-pack-config "$GITHUB_WORKSPACE/policy/config.$cfg.json" > "$RUNNER_TEMP/preview2.json"
+          node ../scripts/preview-gate.mjs gate --preview "$RUNNER_TEMP/preview2.json" --stack "$STACK" --out "$RUNNER_TEMP/summary2.md" --steps-out "$RUNNER_TEMP/steps2.json" --allow ../.github/preview-allow.json
+          node ../scripts/preview-gate.mjs compare --approved "$RUNNER_TEMP/approved/steps.json" --current "$RUNNER_TEMP/steps2.json"
+      - name: pulumi up
+        working-directory: infra
+        env:
+          PULUMI_BACKEND_URL: ${{ steps.target.outputs.backend }}
+          STACK: ${{ steps.target.outputs.stack }}
+          TARGET: ${{ inputs.environment }}
+        run: |
+          set -euo pipefail
+          cfg=staging; [[ $TARGET == prod-* ]] && cfg=prod
+          pulumi up --stack "$STACK" --non-interactive --yes --skip-preview --policy-pack "$GITHUB_WORKSPACE/policy" --policy-pack-config "$GITHUB_WORKSPACE/policy/config.$cfg.json"

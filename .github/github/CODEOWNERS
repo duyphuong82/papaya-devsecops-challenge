@@ -1,0 +1,18 @@
+# Thứ tự: dòng SAU thắng dòng trước. Team là ví dụ, thay bằng team thật.
+*                              @papaya-insurtech/engineering
+/.github/                      @papaya-insurtech/devsecops
+/policy/                       @papaya-insurtech/devsecops
+/scripts/                      @papaya-insurtech/devsecops
+/deploy/                       @papaya-insurtech/devsecops
+/infra/                        @papaya-insurtech/platform @papaya-insurtech/devsecops
+/aws/                          @papaya-insurtech/devsecops
+/github-config/                @papaya-insurtech/devsecops
+/.claude/                      @papaya-insurtech/devsecops
+/CLAUDE.md                     @papaya-insurtech/devsecops
+/.mcp.json                     @papaya-insurtech/devsecops
+/.devcontainer/                @papaya-insurtech/devsecops
+/tenants/vn/                   @papaya-insurtech/tenant-vn @papaya-insurtech/devsecops
+/tenants/th/                   @papaya-insurtech/tenant-th @papaya-insurtech/devsecops
+/tenants/hk/                   @papaya-insurtech/tenant-hk @papaya-insurtech/devsecops
+package-lock.json              @papaya-insurtech/devsecops
+/.github/dependabot.yml        @papaya-insurtech/devsecops

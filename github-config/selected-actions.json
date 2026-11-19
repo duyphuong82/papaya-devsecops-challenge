@@ -1,0 +1,8 @@
+{
+  "github_owned_allowed": true,
+  "verified_allowed": false,
+  "patterns_allowed": [
+    "aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd",
+    "pulumi/actions@96c7761824268174e0d2a4e8c7d75671eebd24a7"
+  ]
+}
